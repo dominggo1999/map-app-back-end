@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const mongoose = require('mongoose');
 require('dotenv').config();
+const HttpError = require('./models/HttpError');
 
 // No third party import
 const placeRouter = require('./routes/places-route');
@@ -14,7 +15,14 @@ app.use(cors());
 app.use(express.json()); // based on body parser
 
 // Router middleware
-app.use('/api/places', placeRouter); // => /api/places
+app.use('/api/places/', placeRouter); // => /api/places
+
+// When there is no route match the url
+app.use((req, res, next) => {
+  const error = new HttpError('Could not found this route');
+
+  return next(error);
+});
 
 // Default error handler
 app.use((error, req, res, next) => {
