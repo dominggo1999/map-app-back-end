@@ -2,6 +2,8 @@ const express = require('express');
 
 const router = express.Router();
 
+const HttpError = require('../models/HttpError');
+
 // Just dummy data, use database instead
 const placeData = require('../data/placesData');
 
@@ -13,10 +15,8 @@ router.get('/:pid', (req, res, next) => {
 
   // Error handler
   if(!place) {
-    res.status(404);
-    res.json({
-      message: 'There is no place found with the provided id',
-    });
+    const error = new HttpError('There is no place found with the provided place id', 404);
+    return next(error);
   }
 
   res.json({
@@ -31,10 +31,9 @@ router.get('/user/:uid', (req, res, next) => {
   });
 
   if(place.length === 0) {
-    res.status(404);
-    res.json({
-      message: 'There is no place found with the provided user id',
-    });
+    const error = new HttpError('There is no place found with the provided user id', 404);
+
+    return next(error);
   }
 
   res.json({

@@ -16,6 +16,18 @@ app.use(express.json()); // based on body parser
 // Router middleware
 app.use('/api/places', placeRouter); // => /api/places
 
+// Default error handler
+app.use((error, req, res, next) => {
+  if(res.headersSent) {
+    return next(error);
+  }
+
+  res.status(error.code || 500);
+  res.json({
+    message: error.message || 'An unknown error occured',
+  });
+});
+
 console.log('Starting server');
 app.listen(PORT, (err) => {
   if(err) console.error(err);
