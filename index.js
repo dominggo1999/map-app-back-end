@@ -3,6 +3,9 @@ const cors = require('cors');
 const mongoose = require('mongoose');
 require('dotenv').config();
 
+// No third party import
+const placeRouter = require('./routes/places-route');
+
 const PORT = process.env.PORT || 5000;
 const app = express();
 
@@ -10,8 +13,8 @@ const app = express();
 app.use(cors());
 app.use(express.json()); // based on body parser
 
-// Use defined routes
-app.use('/posts', require('./routers/postRoutes'));
+// Router middleware
+app.use('/api/places', placeRouter); // => /api/places
 
 console.log('Starting server');
 app.listen(PORT, (err) => {
