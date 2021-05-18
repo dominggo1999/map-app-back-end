@@ -1,5 +1,7 @@
 const { v4: uuidv4 } = require('uuid');
+const { validationResult } = require('express-validator');
 const HttpError = require('../models/HttpError');
+const errorFormatter = require('../utils/errorFormatter');
 
 // Just dummy data, use database instead
 const dummyUsers = require('../data/usersData');
@@ -28,6 +30,15 @@ const getUserById = (req, res, next) => {
 };
 
 const signUp = (req, res, next) => {
+  // Validation
+  const validationError = validationResult(req).formatWith(errorFormatter);
+
+  if(!validationError.isEmpty()) {
+    const errorMessage = new HttpError(validationError.array(), 422);
+
+    return next(errorMessage);
+  }
+
   const { username, email, password } = req.body;
   const newUser = {
     id: uuidv4(),
@@ -45,7 +56,7 @@ const signUp = (req, res, next) => {
     return next(error);
   }
 
-  dummyUsers.push(dummyUsers);
+  dummyUsers.push(newUser);
 
   res.status(201).json({
     newUser,

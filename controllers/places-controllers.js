@@ -1,5 +1,7 @@
 const { v4: uuidv4 } = require('uuid');
+const { validationResult } = require('express-validator');
 const HttpError = require('../models/HttpError');
+const errorFormatter = require('../utils/errorFormatter');
 
 // Just dummy data, use database instead
 let dummyPlaces = require('../data/placesData');
@@ -49,6 +51,13 @@ const getPlacesByUserId = (req, res, next) => {
 };
 
 const createPlace = (req, res, next) => {
+  // Validation
+  const error = validationResult(req).formatWith(errorFormatter);
+  if(!error.isEmpty()) {
+    const errorMessage = new HttpError(error.array(), 422);
+    return next(errorMessage);
+  }
+
   const {
     title, description, imageUrl, address, location, creator,
   } = req.body;
@@ -72,6 +81,13 @@ const createPlace = (req, res, next) => {
 };
 
 const updatePlace = (req, res, next) => {
+  // Validation
+  const error = validationResult(req).formatWith(errorFormatter);
+  if(!error.isEmpty()) {
+    const errorMessage = new HttpError(error.array(), 422);
+    return next(errorMessage);
+  }
+
   const placeId = req.params.pid;
 
   const {
