@@ -6,6 +6,7 @@ const HttpError = require('./models/HttpError');
 
 // No third party import
 const placeRouter = require('./routes/places-route');
+const userRouter = require('./routes/users-route');
 
 const PORT = process.env.PORT || 5000;
 const app = express();
@@ -16,6 +17,7 @@ app.use(express.json()); // based on body parser
 
 // Router middleware
 app.use('/api/places/', placeRouter); // => /api/places
+app.use('/api/users/', userRouter);
 
 // When there is no route match the url
 app.use((req, res, next) => {
