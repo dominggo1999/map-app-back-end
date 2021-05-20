@@ -2,30 +2,36 @@ const { v4: uuidv4 } = require('uuid');
 const { validationResult } = require('express-validator');
 const HttpError = require('../models/HttpError');
 const errorFormatter = require('../utils/errorFormatter');
+const convertDocToObject = require('../utils/convertDocToObj');
 const Place = require('../models/place');
 
 // Just dummy data, use database instead
-let dummyPlaces = require('../data/placesData');
+const dummyPlaces = require('../data/placesData');
 
-const getAllPlaces = ((req, res, next) => {
-  const places = dummyPlaces;
+const getAllPlaces = async (req, res, next) => {
+  let places;
+  try{
+    places = await Place.find({});
+  }catch(err) {
+    const errorMessage = new HttpError('Failed to get places', 500);
 
+    return next(errorMessage);
+  }
   res.json({
-    places,
+    places: convertDocToObject(places),
   });
-});
+};
 
 // Cari satu place saja
 const getPlaceById = async (req, res, next) => {
   const placeId = req.params.pid;
 
   // Get data from database
-
   let place;
   try{
     place = await Place.findById(placeId);
   }catch(err) {
-    const errorMessage = new HttpError('Something is wrong', 500);
+    const errorMessage = new HttpError('Something is wrong when getting places', 500);
     return next(errorMessage);
   }
 
@@ -41,20 +47,24 @@ const getPlaceById = async (req, res, next) => {
 };
 
 // Cari place , bisa lebih dari satu
-const getPlacesByUserId = (req, res, next) => {
+const getPlacesByUserId = async (req, res, next) => {
   const uid = req.params.uid;
-  const place = dummyPlaces.filter((p) => {
-    return p.creator === uid;
-  });
+  let places;
+  try {
+    places = await Place.find({ creator: uid });
+  } catch (err) {
+    const errorMessage = new HttpError('Failed to get places by user');
+    return next(errorMessage);
+  }
 
-  if(place.length === 0) {
+  if(places.length === 0) {
     const error = new HttpError('There is no place found with the provided user id', 404);
 
     return next(error);
   }
 
   res.json({
-    place,
+    places: convertDocToObject(places),
   });
 };
 
@@ -83,7 +93,6 @@ const createPlace = async (req, res, next) => {
   try {
     await createdPlace.save();
   } catch (err) {
-    console.log(err);
     const error = new HttpError('Failed to create place', 500);
     return next(error);
   }
@@ -93,7 +102,7 @@ const createPlace = async (req, res, next) => {
   });
 };
 
-const updatePlace = (req, res, next) => {
+const updatePlace = async (req, res, next) => {
   // Validation
   const error = validationResult(req).formatWith(errorFormatter);
   if(!error.isEmpty()) {
@@ -107,32 +116,60 @@ const updatePlace = (req, res, next) => {
     title, description,
   } = req.body;
 
-  // Salin dummy data yang mau diubah
-  const updatedPlace = { ...dummyPlaces.find((p) => p.id === placeId) };
-  const placeIndex = dummyPlaces.findIndex((p) => p.id === placeId);
-  updatedPlace.title = title;
-  updatedPlace.description = description;
+  // Get place that need to update from DB
+  let place;
+  try {
+    place = await Place.findById(placeId);
+  } catch (error) {
+    const errorMessage = new HttpError('Something is wrong when finding the place', 500);
+    return next(errorMessage);
+  }
 
-  // Change updated place
-  dummyPlaces[placeIndex] = updatedPlace;
+  if(!place) {
+    const err = new HttpError('Cannot find this place', 404);
+    return next(err);
+  }
 
-  res.status(200).json({
-    updatedPlace,
-  });
+  // Edit property need to update
+  place.title = title;
+  place.description = description;
+
+  // Update database
+  try {
+    await place.save();
+  } catch (error) {
+    const errorMessage = new HttpError('Something is wrong when updating the place', 500);
+    return next(errorMessage);
+  }
+
+  return res.json({ place: place.toObject({ getters: true }) });
 };
 
-const deletePlace = (req, res, next) => {
+const deletePlace = async (req, res, next) => {
   const placeId = req.params.pid;
-  const deletedPlace = dummyPlaces.find((p) => p.id === placeId);
-  dummyPlaces = dummyPlaces.filter((p) => p.id !== placeId);
+  // Get place that need to delete from DB
+  let place;
+  try {
+    place = await Place.findById(placeId);
+  } catch (error) {
+    const errorMessage = new HttpError('Something is wrong when finding the place', 500);
+    return next(errorMessage);
+  }
 
-  if(!deletedPlace) {
-    const error = new HttpError('There is no place with the provided id', 404);
-    return next(error);
+  if(!place) {
+    const err = new HttpError('Cannot find this place', 404);
+    return next(err);
+  }
+
+  try {
+    await place.remove();
+  } catch (error) {
+    const errorMessage = new HttpError('Something is wrong when deleting the place', 500);
+    return next(errorMessage);
   }
 
   res.status(200).json({
-    dummyPlaces,
+    message: 'Deleting file is done',
   });
 };
 

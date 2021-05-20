@@ -5,6 +5,8 @@ const { check } = require('express-validator');
 
 const placeControllers = require('../controllers/places-controllers');
 
+// Prefix          =               "/api/places"
+
 router.get('/', placeControllers.getAllPlaces);
 
 router.get('/:pid', placeControllers.getPlaceById);
