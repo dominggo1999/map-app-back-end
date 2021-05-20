@@ -1,9 +1,11 @@
 const { v4: uuidv4 } = require('uuid');
 const { validationResult } = require('express-validator');
+const mongoose = require('mongoose');
 const HttpError = require('../models/HttpError');
 const errorFormatter = require('../utils/errorFormatter');
 const convertDocToObject = require('../utils/convertDocToObj');
 const Place = require('../models/place');
+const User = require('../models/user');
 
 // Just dummy data, use database instead
 const dummyPlaces = require('../data/placesData');
@@ -80,6 +82,15 @@ const createPlace = async (req, res, next) => {
     title, description, imageUrl, address, location, creator,
   } = req.body;
 
+  // Check if creator exist
+  let user;
+  try {
+    user = await User.findById(creator);
+  } catch (err) {
+    const errorMessage = new HttpError('There is no user found', 404);
+    return next(errorMessage);
+  }
+
   const createdPlace = new Place({
     title,
     description,
@@ -89,8 +100,21 @@ const createPlace = async (req, res, next) => {
     creator,
   });
 
+  /*
+    2 proses
+    simpan new place ke database
+    add place id ke user place property
+  */
+
   try {
-    await createdPlace.save();
+    const sess = await mongoose.startSession();
+    sess.startTransaction();
+
+    await createdPlace.save({ session: sess });
+    user.places.push(createdPlace); // Only add the object id
+    await user.save({ session: sess });
+
+    await sess.commitTransaction();
   } catch (err) {
     const error = new HttpError('Failed to create place', 500);
     return next(error);
