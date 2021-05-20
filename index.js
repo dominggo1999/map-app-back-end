@@ -1,7 +1,7 @@
+require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const mongoose = require('mongoose');
-require('dotenv').config();
 const HttpError = require('./models/HttpError');
 
 // No third party import
@@ -39,7 +39,16 @@ app.use((error, req, res, next) => {
 });
 
 console.log('Starting server');
-app.listen(PORT, (err) => {
-  if(err) console.error(err);
-  console.log(`Success! Your application is running on port ${PORT}`);
-});
+// Connecting to mongodb atlas
+mongoose
+  .connect(process.env.MONGODB_URI, { useNewUrlParser: true, useUnifiedTopology: true })
+  .then(() => {
+    // Start server only if database connection is success
+    app.listen(PORT, (err) => {
+      if(err) console.error(err);
+      console.log(`Success! Your application is running on port ${PORT}`);
+    });
+  })
+  .catch((err) => {
+    console.log(err);
+  });

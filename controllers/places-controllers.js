@@ -2,6 +2,7 @@ const { v4: uuidv4 } = require('uuid');
 const { validationResult } = require('express-validator');
 const HttpError = require('../models/HttpError');
 const errorFormatter = require('../utils/errorFormatter');
+const Place = require('../models/place');
 
 // Just dummy data, use database instead
 let dummyPlaces = require('../data/placesData');
@@ -15,11 +16,18 @@ const getAllPlaces = ((req, res, next) => {
 });
 
 // Cari satu place saja
-const getPlaceById = ((req, res, next) => {
+const getPlaceById = async (req, res, next) => {
   const placeId = req.params.pid;
-  const place = dummyPlaces.find((p) => {
-    return p.id === placeId;
-  });
+
+  // Get data from database
+
+  let place;
+  try{
+    place = await Place.findById(placeId);
+  }catch(err) {
+    const errorMessage = new HttpError('Something is wrong', 500);
+    return next(errorMessage);
+  }
 
   // Error handler
   if(!place) {
@@ -28,9 +36,9 @@ const getPlaceById = ((req, res, next) => {
   }
 
   res.json({
-    place,
+    place: place.toObject({ getters: true }),
   });
-});
+};
 
 // Cari place , bisa lebih dari satu
 const getPlacesByUserId = (req, res, next) => {
@@ -50,7 +58,7 @@ const getPlacesByUserId = (req, res, next) => {
   });
 };
 
-const createPlace = (req, res, next) => {
+const createPlace = async (req, res, next) => {
   // Validation
   const error = validationResult(req).formatWith(errorFormatter);
   if(!error.isEmpty()) {
@@ -62,7 +70,7 @@ const createPlace = (req, res, next) => {
     title, description, imageUrl, address, location, creator,
   } = req.body;
 
-  const createdPlace = {
+  const createdPlace = new Place({
     id: uuidv4(),
     title,
     description,
@@ -70,10 +78,15 @@ const createPlace = (req, res, next) => {
     address,
     location,
     creator,
-  };
+  });
 
-  // Push data to database
-  dummyPlaces.push(createdPlace);
+  try {
+    await createdPlace.save();
+  } catch (err) {
+    console.log(err);
+    const error = new HttpError('Failed to create place', 500);
+    return next(error);
+  }
 
   res.status(201).json({
     createdPlace,
