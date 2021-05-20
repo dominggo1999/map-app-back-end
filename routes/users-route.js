@@ -22,6 +22,12 @@ router.post('/signUp',
     .isLength({ min: 8 }),
   usersController.signUp);
 
-router.post('/login', usersController.login);
+router.post('/login',
+  check('email')
+    .normalizeEmail()
+    .isEmail(),
+  check('password')
+    .isLength({ min: 8 }),
+  usersController.login);
 
 module.exports = router;

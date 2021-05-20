@@ -81,7 +81,6 @@ const createPlace = async (req, res, next) => {
   } = req.body;
 
   const createdPlace = new Place({
-    id: uuidv4(),
     title,
     description,
     imageUrl,

@@ -41,7 +41,7 @@ app.use((error, req, res, next) => {
 console.log('Starting server');
 // Connecting to mongodb atlas
 mongoose
-  .connect(process.env.MONGODB_URI, { useNewUrlParser: true, useUnifiedTopology: true })
+  .connect(process.env.MONGODB_URI, { useNewUrlParser: true, useUnifiedTopology: true, useCreateIndex: true })
   .then(() => {
     // Start server only if database connection is success
     app.listen(PORT, (err) => {
