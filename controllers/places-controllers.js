@@ -173,7 +173,7 @@ const deletePlace = async (req, res, next) => {
   // Get place that need to delete from DB
   let place;
   try {
-    place = await Place.findById(placeId);
+    place = await Place.findById(placeId).populate('creator'); // hapus id di creator(user) juga
   } catch (error) {
     const errorMessage = new HttpError('Something is wrong when finding the place', 500);
     return next(errorMessage);
@@ -185,8 +185,16 @@ const deletePlace = async (req, res, next) => {
   }
 
   try {
-    await place.remove();
+    const sess = await mongoose.startSession();
+    sess.startTransaction();
+
+    await place.remove({ session: sess });
+    place.creator.places.pull(place); // Remove place id from user places
+    await place.creator.save({ session: sess });
+
+    await sess.commitTransaction();
   } catch (error) {
+    console.log(error);
     const errorMessage = new HttpError('Something is wrong when deleting the place', 500);
     return next(errorMessage);
   }
