@@ -59,12 +59,6 @@ const getPlacesByUserId = async (req, res, next) => {
     return next(errorMessage);
   }
 
-  if(places.length === 0) {
-    const error = new HttpError('There is no place found with the provided user id', 404);
-
-    return next(error);
-  }
-
   res.json({
     places: convertDocToObject(places),
   });

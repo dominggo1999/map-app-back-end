@@ -120,6 +120,7 @@ const login = async (req, res, next) => {
 
   res.status(201).json({
     message: 'Login success',
+    user: user.id,
   });
 };
 
