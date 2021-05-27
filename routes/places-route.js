@@ -5,6 +5,8 @@ const { check } = require('express-validator');
 
 const placeControllers = require('../controllers/places-controllers');
 
+const fileUpload = require('../middlewares/file-upload');
+
 // Prefix          =               "/api/places"
 
 router.get('/', placeControllers.getAllPlaces);
@@ -14,14 +16,12 @@ router.get('/:pid', placeControllers.getPlaceById);
 router.get('/user/:uid', placeControllers.getPlacesByUserId);
 
 router.post('/',
+  fileUpload.single('imageUrl'),
   check('title')
     .not()
     .isEmpty(),
   check('description')
     .isLength({ min: 5 }),
-  check('imageUrl')
-    .not()
-    .isEmpty(),
   check('address')
     .not()
     .isEmpty(),
