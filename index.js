@@ -1,4 +1,6 @@
 require('dotenv').config();
+const fs = require('fs');
+const path = require('path');
 const express = require('express');
 const cors = require('cors');
 const mongoose = require('mongoose');
@@ -15,6 +17,10 @@ const app = express();
 app.use(cors());
 app.use(express.json()); // based on body parser
 
+// Serve static files
+// Harus ada "/" di awal
+app.use('/uploads/images', express.static(path.join('uploads', 'images')));
+
 // Router middleware
 app.use('/api/places/', placeRouter); // => /api/places
 app.use('/api/users/', userRouter);
@@ -28,6 +34,14 @@ app.use((req, res, next) => {
 
 // Default error handler
 app.use((error, req, res, next) => {
+  // Kalau sudah file udah dibuat tapi error
+  // Unlink file path
+  if(req.file) {
+    fs.unlink(req.file.path, (err) => {
+      console.log(err);
+    });
+  }
+
   if(res.headersSent) {
     return next(error);
   }

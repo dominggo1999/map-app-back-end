@@ -74,7 +74,7 @@ const signUp = async (req, res, next) => {
     username,
     email,
     password, // this is not the corect way to store password in the database
-    image: 'https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Fcdn.iconscout.com%2Ficon%2Ffree%2Fpng-256%2Favatar-370-456322.png&f=1&nofb=1',
+    image: req.file.path,
     places: [],
   });
 
