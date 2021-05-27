@@ -1,4 +1,5 @@
 const { validationResult } = require('express-validator');
+const fs = require('fs');
 const mongoose = require('mongoose');
 const HttpError = require('../models/HttpError');
 const errorFormatter = require('../utils/errorFormatter');
@@ -64,8 +65,6 @@ const getPlacesByUserId = async (req, res, next) => {
 };
 
 const createPlace = async (req, res, next) => {
-  console.log(req.body);
-
   // Validation
   const error = validationResult(req).formatWith(errorFormatter);
   if(!error.isEmpty()) {
@@ -179,6 +178,8 @@ const deletePlace = async (req, res, next) => {
     return next(err);
   }
 
+  const imagePath = place.imageUrl;
+
   try {
     const sess = await mongoose.startSession();
     sess.startTransaction();
@@ -193,6 +194,11 @@ const deletePlace = async (req, res, next) => {
     const errorMessage = new HttpError('Something is wrong when deleting the place', 500);
     return next(errorMessage);
   }
+
+  // Remove image from file system
+  fs.unlink(imagePath, (err) => {
+    console.log(err);
+  });
 
   res.status(200).json({
     message: 'Deleting file is done',
